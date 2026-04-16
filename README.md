@@ -8,11 +8,11 @@
 
 | Rotor Visualization | Pitch Curve & Results |
 |---|---|
-| ![Rotor animation showing 4 blades with AoA color coding and thrust vector](screenshots/rotor-animation.png) | ![Primary results panel with thrust, power, and figure of merit](screenshots/results-panel.png) |
+| ![Rotor animation showing 4 blades with AoA color coding and thrust vector](rotor-animation.png) | ![Primary results panel with thrust, power, and figure of merit](results-panel.png) |
 
 | Stall Warning Active | Claude AI Analysis |
 |---|---|
-| ![Blade AoA warning with stall fraction and design flags](screenshots/stall-warning.png) | ![Claude engineering analysis panel with optimization suggestions](screenshots/ai-analysis.png) |
+| ![Blade AoA warning with stall fraction and design flags](stall-warning.png) | ![Claude engineering analysis panel with optimization suggestions](ai-analysis.png) |
 
 ---
 
