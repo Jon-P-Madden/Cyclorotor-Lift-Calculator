@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cyclorotor Lift Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0d1117;
+  --surf:     #161b22;
+  --surf2:    #1c2128;
+  --border:   #30363d;
+  --text:     #e6edf3;
+  --muted:    #8b949e;
+  --amber:    #f0a500;
+  --blue:     #58a6ff;
+  --green:    #3fb950;
+  --warn:     #d29922;
+  --danger:   #f85149;
+  --mono:     'JetBrains Mono', monospace;
+  --sans:     'DM Sans', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.5;min-height:100vh;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surf);position:sticky;top:0;z-index:20;}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-weight:700;font-size:13px;color:var(--amber);letter-spacing:.06em;}
+.logo-icon{width:26px;height:26px;border:1.5px solid var(--amber);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--amber);}
+.logo-sub{color:var(--muted);font-weight:400;font-size:10px;letter-spacing:.04em;}
+.unit-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:5px;overflow:hidden;}
+.utb{padding:4px 12px;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;background:none;border:none;color:var(--muted);cursor:pointer;transition:all .15s;}
+.utb.on{background:var(--amber);color:var(--bg);}
+
+/* LAYOUT */
+main{padding:16px 20px;max-width:1360px;margin:0 auto;}
+.workspace{display:grid;grid-template-columns:268px 1fr;gap:16px;margin-bottom:16px;}
+
+/* INPUTS */
+.inputs-panel{display:flex;flex-direction:column;gap:10px;}
+.igroup{background:var(--surf);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.gh{padding:6px 10px;background:var(--surf2);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;}
+.gb{padding:8px 10px;display:flex;flex-direction:column;gap:7px;}
+.field{display:flex;flex-direction:column;gap:2px;}
+.field label{font-size:10px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;}
+.unit-tag{font-family:var(--mono);color:var(--amber);font-size:9px;font-weight:600;}
+.rval{font-family:var(--mono);font-size:12px;color:var(--amber);font-weight:700;}
+input[type=number],select{background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:4px 7px;font-family:var(--mono);font-size:11px;width:100%;transition:border-color .15s;}
+input[type=number]:focus,select:focus{outline:none;border-color:var(--amber);}
+input[type=range]{width:100%;accent-color:var(--amber);cursor:pointer;}
+.calc-btn{padding:10px;background:var(--amber);border:none;border-radius:7px;color:var(--bg);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:all .15s;text-transform:uppercase;}
+.calc-btn:hover{background:#ffc030;transform:translateY(-1px);}
+.auto-row{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);cursor:pointer;}
+.auto-row input{accent-color:var(--amber);cursor:pointer;}
+
+/* OUTPUTS */
+.outputs-panel{display:flex;flex-direction:column;gap:12px;}
+.top-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* CANVAS */
+.canvas-wrap{background:var(--surf);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.panel-hdr{padding:6px 10px;background:var(--surf2);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;}
+canvas{display:block;}
+#rotorCanvas{width:100%;aspect-ratio:1;}
+#pitchCanvas{width:100%;height:70px;}
+
+/* RESULTS */
+.results-wrap{display:flex;flex-direction:column;gap:8px;}
+.rcard-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rcard{background:var(--surf);border:1px solid var(--border);border-radius:7px;padding:9px 11px;}
+.rcard.primary{border-color:rgba(240,165,0,.35);background:rgba(240,165,0,.04);grid-column:span 2;}
+.rcard.blue{border-color:rgba(88,166,255,.3);background:rgba(88,166,255,.03);}
+.rlabel{font-size:9px;font-family:var(--mono);letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:3px;}
+.rvalue{font-family:var(--mono);font-size:24px;font-weight:700;color:var(--amber);line-height:1.1;}
+.rcard.blue .rvalue{color:var(--blue);}
+.runit{font-size:11px;color:var(--muted);font-weight:400;}
+.rsub{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.rvalue.sm{font-size:16px;color:var(--text);}
+.fm-track{margin-top:5px;background:var(--bg);border-radius:2px;height:3px;}
+.fm-fill{height:100%;border-radius:2px;background:var(--green);transition:width .5s;}
+
+/* PITCH CURVE */
+.pitch-wrap{background:var(--surf);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+
+/* WARNINGS */
+.warn-panel{background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.3);border-radius:7px;padding:9px 12px;display:none;}
+.warn-panel.show{display:block;}
+.warn-title{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--danger);text-transform:uppercase;margin-bottom:5px;}
+.warn-item{font-size:11px;color:var(--text);padding:2px 0;display:flex;gap:6px;}
+.warn-item::before{content:'▸';color:var(--danger);flex-shrink:0;}
+
+/* SECONDARY STATS */
+.stats-wrap{background:var(--surf);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.stats-grid{display:grid;grid-template-columns:repeat(6,1fr);}
+.scell{padding:7px 10px;border-right:1px solid var(--border);}
+.scell:last-child{border-right:none;}
+.slabel{font-size:8px;font-family:var(--mono);letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:2px;}
+.svalue{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);}
+
+/* AI PANEL */
+.ai-wrap{background:var(--surf);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.ai-hdr{padding:8px 14px;background:var(--surf2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ai-title{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--blue);text-transform:uppercase;}
+.ai-model{font-family:var(--mono);font-size:9px;color:var(--muted);}
+.ai-controls{padding:10px 14px;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border);}
+.api-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);padding:6px 9px;font-family:var(--mono);font-size:10px;}
+.api-inp::placeholder{color:var(--muted);}
+.analyze-btn{padding:6px 14px;background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.35);border-radius:4px;color:var(--blue);font-family:var(--mono);font-size:10px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.05em;}
+.analyze-btn:hover:not(:disabled){background:rgba(88,166,255,.22);}
+.analyze-btn:disabled{opacity:.45;cursor:not-allowed;}
+.ai-body{padding:14px 16px;font-size:12px;line-height:1.75;color:var(--text);min-height:72px;max-height:380px;overflow-y:auto;}
+.ai-body.empty{color:var(--muted);font-size:11px;font-style:italic;}
+.ai-body h3{font-size:10px;font-family:var(--mono);letter-spacing:.08em;color:var(--blue);text-transform:uppercase;margin:12px 0 4px;border-bottom:1px solid var(--border);padding-bottom:4px;}
+.ai-body h3:first-child{margin-top:0;}
+.ai-body p{margin-bottom:6px;}
+.ai-body ul{padding-left:14px;margin-bottom:6px;}
+.ai-body li{margin-bottom:3px;}
+.ai-spinner{display:inline-block;width:10px;height:10px;border:2px solid rgba(88,166,255,.3);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:6px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+footer{margin-top:16px;padding:10px 20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted);}
+footer a{color:var(--muted);text-decoration:none;}
+footer a:hover{color:var(--text);}
+
+@media(max-width:960px){.workspace{grid-template-columns:1fr;}.top-row{grid-template-columns:1fr;}.stats-grid{grid-template-columns:repeat(3,1fr);}.scell:nth-child(3){border-right:none;}.scell:nth-child(4),.scell:nth-child(5),.scell:nth-child(6){border-top:1px solid var(--border);}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">↻</div>
+    CYCLOROTOR LIFT CALCULATOR
+    <span class="logo-sub">/ Blade Element Momentum Theory</span>
+  </div>
+  <div class="unit-toggle">
+    <button class="utb on" id="btnSI" onclick="setUnits('si')">SI</button>
+    <button class="utb" id="btnImp" onclick="setUnits('imp')">IMP</button>
+  </div>
+</header>
+
+<main>
+<div class="workspace">
+
+  <!-- ── INPUTS ─────────────────────────────────────────── -->
+  <aside class="inputs-panel">
+
+    <div class="igroup">
+      <div class="gh">Rotor Geometry</div>
+      <div class="gb">
+        <div class="field">
+          <label>Rotor Radius <span class="unit-tag" id="lR">m</span></label>
+          <input type="number" id="iR" value="0.150" step="0.005" min="0.02" max="2" oninput="autoCalc()">
+        </div>
+        <div class="field">
+          <label>Blade Span <span class="unit-tag" id="lb">m</span></label>
+          <input type="number" id="ib" value="0.300" step="0.01" min="0.05" max="4" oninput="autoCalc()">
+        </div>
+        <div class="field">
+          <label>Blade Chord <span class="unit-tag" id="lc">m</span></label>
+          <input type="number" id="ic" value="0.040" step="0.002" min="0.005" max="0.5" oninput="autoCalc()">
+        </div>
+        <div class="field">
+          <label>Number of Blades</label>
+          <select id="iN" onchange="autoCalc()">
+            <option value="2">2</option><option value="3">3</option>
+            <option value="4" selected>4</option><option value="5">5</option>
+            <option value="6">6</option><option value="8">8</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="igroup">
+      <div class="gh">Rotor Speed</div>
+      <div class="gb">
+        <div class="field">
+          <label>RPM <span class="rval" id="dRPM">1500</span></label>
+          <input type="range" id="iRPM" min="100" max="8000" step="50" value="1500"
+            oninput="document.getElementById('dRPM').textContent=this.value; autoCalc();">
+        </div>
+      </div>
+    </div>
+
+    <div class="igroup">
+      <div class="gh">Pitch Control</div>
+      <div class="gb">
+        <div class="field">
+          <label>Max Pitch Amplitude <span class="rval" id="dTheta">15°</span></label>
+          <input type="range" id="iTheta" min="0" max="35" step="0.5" value="15"
+            oninput="document.getElementById('dTheta').textContent=this.value+'°'; autoCalc();">
+        </div>
+        <div class="field">
+          <label>Phase Angle (thrust dir.) <span class="rval" id="dPhase">0°</span></label>
+          <input type="range" id="iPhase" min="0" max="355" step="5" value="0"
+            oninput="document.getElementById('dPhase').textContent=this.value+'°'; autoCalc();">
+        </div>
+      </div>
+    </div>
+
+    <div class="igroup">
+      <div class="gh">Airfoil</div>
+      <div class="gb">
+        <div class="field">
+          <label>Profile Preset</label>
+          <select id="iAirfoil" onchange="applyPreset()">
+            <option value="custom">Custom / Manual</option>
+            <option value="flat" selected>Flat plate (thin)</option>
+            <option value="n0008">NACA 0008</option>
+            <option value="n0012">NACA 0012</option>
+            <option value="n0015">NACA 0015</option>
+            <option value="ag04">AG04 (low Re)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Cl_α <span class="unit-tag">/rad</span></label>
+          <input type="number" id="iCla" value="5.73" step="0.1" min="1" max="8" oninput="autoCalc()">
+        </div>
+        <div class="field">
+          <label>Cd₀</label>
+          <input type="number" id="iCd0" value="0.015" step="0.001" min="0.003" max="0.15" oninput="autoCalc()">
+        </div>
+        <div class="field">
+          <label>Stall Angle <span class="unit-tag">deg</span></label>
+          <input type="number" id="iStall" value="12" step="0.5" min="4" max="28" oninput="autoCalc()">
+        </div>
+      </div>
+    </div>
+
+    <div class="igroup">
+      <div class="gh">Environment</div>
+      <div class="gb">
+        <div class="field">
+          <label>Altitude <span class="unit-tag" id="lAlt">m</span></label>
+          <input type="number" id="iAlt" value="0" step="100" min="0" max="9000"
+            oninput="updateRhoFromAlt(); autoCalc();">
+        </div>
+        <div class="field">
+          <label>Air Density <span class="unit-tag">kg/m³</span></label>
+          <input type="number" id="iRho" value="1.225" step="0.001" min="0.4" max="1.4" oninput="autoCalc()">
+        </div>
+      </div>
+    </div>
+
+    <label class="auto-row">
+      <input type="checkbox" id="autoCb" checked> Auto-calculate
+    </label>
+    <button class="calc-btn" onclick="calculate()">⟳  CALCULATE</button>
+
+  </aside>
+
+  <!-- ── OUTPUTS ────────────────────────────────────────── -->
+  <section class="outputs-panel">
+
+    <div class="top-row">
+
+      <!-- Rotor animation -->
+      <div class="canvas-wrap">
+        <div class="panel-hdr">
+          ROTOR VISUALIZATION
+          <span><span class="live-dot"></span></span>
+        </div>
+        <canvas id="rotorCanvas" width="480" height="480"></canvas>
+      </div>
+
+      <!-- Primary results -->
+      <div class="results-wrap">
+        <div class="rcard-grid">
+          <div class="rcard primary">
+            <div class="rlabel">Total Thrust</div>
+            <div class="rvalue" id="oThrust">—<span class="runit" id="oThrustU"> N</span></div>
+            <div class="rsub" id="oThrustSub"></div>
+          </div>
+          <div class="rcard">
+            <div class="rlabel">Power Required</div>
+            <div class="rvalue sm" id="oPower">—<span class="runit" id="oPowerU"> W</span></div>
+            <div class="rsub" id="oPowerSub"></div>
+          </div>
+          <div class="rcard blue">
+            <div class="rlabel">Figure of Merit</div>
+            <div class="rvalue" id="oFM" style="color:var(--green);">—</div>
+            <div class="fm-track"><div class="fm-fill" id="oFMbar" style="width:0%"></div></div>
+            <div class="rsub">hover efficiency</div>
+          </div>
+          <div class="rcard">
+            <div class="rlabel">Torque</div>
+            <div class="rvalue sm" id="oTorque">—<span class="runit" id="oTorqueU"> N·m</span></div>
+          </div>
+          <div class="rcard">
+            <div class="rlabel">Thrust Vector</div>
+            <div class="rvalue sm" id="oDir">—</div>
+            <div class="rsub">from vertical</div>
+          </div>
+        </div>
+
+        <!-- Pitch curve -->
+        <div class="pitch-wrap">
+          <div class="panel-hdr">
+            BLADE PITCH vs AZIMUTH
+            <span style="color:var(--amber);font-size:8px;">θ(φ) = θ_max·cos(φ − ψ)</span>
+          </div>
+          <canvas id="pitchCanvas" width="700" height="70"></canvas>
+        </div>
+
+        <!-- Warnings -->
+        <div class="warn-panel" id="warnPanel">
+          <div class="warn-title">⚠  Design Warnings</div>
+          <div id="warnList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secondary stats row -->
+    <div class="stats-wrap">
+      <div class="panel-hdr">DERIVED PARAMETERS</div>
+      <div class="stats-grid">
+        <div class="scell"><div class="slabel">Tip Speed</div><div class="svalue" id="oVtip">—</div></div>
+        <div class="scell"><div class="slabel">Max Blade AoA</div><div class="svalue" id="oAoA">—</div></div>
+        <div class="scell"><div class="slabel">Rotor Solidity</div><div class="svalue" id="oSolid">—</div></div>
+        <div class="scell"><div class="slabel">Disk Loading</div><div class="svalue" id="oDL">—</div></div>
+        <div class="scell"><div class="slabel">Power Loading</div><div class="svalue" id="oPL">—</div></div>
+        <div class="scell"><div class="slabel">Blade AR</div><div class="svalue" id="oAR">—</div></div>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<!-- ── AI PANEL ──────────────────────────────────────────── -->
+<div class="ai-wrap">
+  <div class="ai-hdr">
+    <div class="ai-title">◆ Claude AI Engineering Analysis</div>
+    <span class="ai-model">claude-sonnet-4-20250514</span>
+  </div>
+  <div class="ai-controls">
+    <input type="password" class="api-inp" id="apiKey" placeholder="Anthropic API key  (sk-ant-...)">
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeWithClaude()">ANALYZE DESIGN</button>
+  </div>
+  <div class="ai-body empty" id="aiBody">Run a calculation first, then analyze for engineering assessment and optimization suggestions.</div>
+</div>
+
+</main>
+
+<footer>
+  <span>Cyclorotor Lift Calculator · BEMT + Actuator Disk · <a href="https://github.com/Jon-P-Madden" target="_blank">github.com/Jon-P-Madden</a></span>
+  <span>MIT License · 2025</span>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let units = 'si';
+let lastResult = null;
+let lastParams = null;
+let animTime = 0;
+let lastTs = null;
+let rafId = null;
+
+const AIRFOIL_PRESETS = {
+  flat:  { cla: 5.50, cd0: 0.015, stall: 11 },
+  n0008: { cla: 5.90, cd0: 0.010, stall: 12 },
+  n0012: { cla: 5.73, cd0: 0.012, stall: 14 },
+  n0015: { cla: 5.50, cd0: 0.013, stall: 16 },
+  ag04:  { cla: 6.10, cd0: 0.009, stall: 13 },
+};
+
+// ═══════════════════════════════════════════════════════════
+//  UNITS
+// ═══════════════════════════════════════════════════════════
+function setUnits(u) {
+  const prev = units;
+  units = u;
+  document.getElementById('btnSI').classList.toggle('on', u==='si');
+  document.getElementById('btnImp').classList.toggle('on', u==='imp');
+  const imp = u === 'imp';
+  document.getElementById('lR').textContent   = imp ? 'in' : 'm';
+  document.getElementById('lb').textContent   = imp ? 'in' : 'm';
+  document.getElementById('lc').textContent   = imp ? 'in' : 'm';
+  document.getElementById('lAlt').textContent = imp ? 'ft' : 'm';
+
+  // Convert input values
+  const k = imp ? 39.3701 : (1/39.3701);
+  const ka = imp ? 3.28084 : (1/3.28084);
+  ['iR','ib','ic'].forEach(id => {
+    const v = parseFloat(document.getElementById(id).value);
+    document.getElementById(id).value = (v * k).toFixed(imp?2:4);
+  });
+  const va = parseFloat(document.getElementById('iAlt').value);
+  document.getElementById('iAlt').value = (va * ka).toFixed(0);
+  autoCalc();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════
+function toSI(id) {
+  const v = parseFloat(document.getElementById(id).value) || 0;
+  return units === 'imp' ? v / 39.3701 : v;
+}
+function toSI_alt(id) {
+  const v = parseFloat(document.getElementById(id).value) || 0;
+  return units === 'imp' ? v / 3.28084 : v;
+}
+function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function updateRhoFromAlt() {
+  const hm = toSI_alt('iAlt');
+  const T = 288.15 - 0.0065 * Math.min(hm, 11000);
+  const P = 101325 * Math.pow(T / 288.15, 5.2561);
+  const rho = P / (287.058 * T);
+  document.getElementById('iRho').value = rho.toFixed(4);
+}
+
+function applyPreset() {
+  const v = document.getElementById('iAirfoil').value;
+  if (v === 'custom') return;
+  const p = AIRFOIL_PRESETS[v];
+  document.getElementById('iCla').value   = p.cla;
+  document.getElementById('iCd0').value   = p.cd0;
+  document.getElementById('iStall').value = p.stall;
+  autoCalc();
+}
+
+function autoCalc() {
+  if (document.getElementById('autoCb').checked) calculate();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PHYSICS — Blade Element Momentum Theory
+// ═══════════════════════════════════════════════════════════
+function calcCyclorotor(p) {
+  /*
+   * Coordinate convention
+   * ---------------------
+   * φ = azimuth, CCW from top (12 o'clock)
+   * Blade position in global frame: (R·sin φ,  R·cos φ)  [y = "up"]
+   * Blade tangential velocity (CCW): d/dφ · R · (sin φ, cos φ) · ω
+   *   = ωR · (cos φ, -sin φ)  → rightward at φ=0
+   *
+   * Eccentricity pitch law:
+   *   θ(φ) = θ_max · cos(φ - ψ)
+   *   ψ = phase angle → controls thrust direction
+   *   ψ=0 → max pitch at top/bottom → thrust straight up
+   *
+   * Lift direction: radially inward (-sin φ, -cos φ) for positive AoA
+   * Drag direction: opposes blade motion (-cos φ, +sin φ)
+   *
+   * Force per blade (time-averaged over one revolution):
+   *   Fx = (1/2π)∫[-L sin φ - D cos φ] dφ
+   *   Fy = (1/2π)∫[-L cos φ + D sin φ] dφ
+   *   Q  = (1/2π)∫[D · R] dφ          (profile torque)
+   *
+   * Induced power via actuator disk (momentum theory):
+   *   A_disk = 2R·b  (projected frontal area)
+   *   P_i = T^1.5 / √(2ρA)
+   */
+
+  const { R, b, c, N, RPM, thetaMaxDeg, phaseAngleDeg,
+          ClAlpha, Cd0, stallDeg, rho } = p;
+
+  const omega   = RPM * 2 * Math.PI / 60;
+  const Vtip    = omega * R;
+  const thetaMax = thetaMaxDeg * Math.PI / 180;
+  const psi      = phaseAngleDeg * Math.PI / 180;
+  const stallRad = stallDeg * Math.PI / 180;
+  const AR       = b / c;
+  const q_tip    = 0.5 * rho * Vtip * Vtip;
+
+  const STEPS = 720;
+  const dphi = 2 * Math.PI / STEPS;
+  const w    = dphi / (2 * Math.PI);   // weight for time-averaging
+
+  let Fx = 0, Fy = 0, Q = 0;
+  let maxAoA = 0, stallCount = 0;
+  const bladeData = [];  // for animation (sampled at N blade positions)
+
+  for (let i = 0; i < STEPS; i++) {
+    const phi   = i * dphi;
+    const theta = thetaMax * Math.cos(phi - psi);  // pitch angle (rad)
+    const AoA   = theta;                            // in hover, AoA ≈ pitch
+    const AoAabs = Math.abs(AoA);
+    if (AoAabs > maxAoA) maxAoA = AoAabs;
+
+    let Cl, Cd;
+    const stalled = AoAabs > stallRad;
+    if (stalled) {
+      stallCount++;
+      // Simplified post-stall: flat-top Cl, rising Cd
+      Cl = Math.sign(AoA) * ClAlpha * stallRad * 0.75;
+      Cd = Cd0 + 0.10 + 0.9 * Math.pow(AoAabs - stallRad, 1.6);
+    } else {
+      Cl = ClAlpha * AoA;
+      Cd = Cd0 + (Cl * Cl) / (Math.PI * AR * 0.88);  // induced drag (Oswald ~0.88)
+    }
+
+    const L = q_tip * c * Cl * b;   // [N] lift, span-integrated
+    const D = q_tip * c * Cd * b;   // [N] drag
+
+    Fx += w * (-L * Math.sin(phi) - D * Math.cos(phi));
+    Fy += w * (-L * Math.cos(phi) + D * Math.sin(phi));
+    Q  += w * (D * R);
+  }
+
+  Fx *= N; Fy *= N; Q *= N;
+
+  const thrustMag   = Math.sqrt(Fx*Fx + Fy*Fy);
+  const thrustAngle = Math.atan2(Fx, -Fy) * 180 / Math.PI;  // deg from vertical
+
+  // Induced power via actuator disk
+  const A_disk  = 2 * R * b;
+  const P_ideal = thrustMag > 0 ? Math.pow(thrustMag, 1.5) / Math.sqrt(2 * rho * A_disk) : 0;
+  const P_prof  = Q * omega;
+  const P_total = P_ideal + P_prof;
+
+  const FM = P_total > 1e-6 ? Math.max(0, Math.min(1, P_ideal / P_total)) : 0;
+
+  const solidity   = (N * c) / (Math.PI * R);
+  const stallFrac  = stallCount / STEPS;   // fraction of revolution stalled
+
+  return {
+    thrustN:    thrustMag,
+    thrustKg:   thrustMag / 9.81,
+    thrustLbf:  thrustMag * 0.2248,
+    thrustAngle,
+    torqueNm:   Q,
+    torqueLbft: Q * 0.7376,
+    powerW:     P_total,
+    powerHP:    P_total / 745.7,
+    FM,
+    Vtip,
+    Vtip_fps:   Vtip * 3.28084,
+    maxAoADeg:  maxAoA * 180 / Math.PI,
+    stallFrac,
+    diskLoading: thrustMag / A_disk,          // N/m²
+    diskLoadingImp: (thrustMag * 0.2248) / (A_disk * 10.764),  // lbf/ft²
+    powerLoading: thrustMag / (P_total + 1e-9), // N/W
+    powerLoadingImp: (thrustMag * 0.2248) / (P_total / 745.7 + 1e-9), // lbf/HP
+    solidity,
+    AR,
+    Fx, Fy
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MAIN CALCULATE
+// ═══════════════════════════════════════════════════════════
+function calculate() {
+  const params = {
+    R:           toSI('iR'),
+    b:           toSI('ib'),
+    c:           toSI('ic'),
+    N:           parseInt(document.getElementById('iN').value),
+    RPM:         getVal('iRPM'),
+    thetaMaxDeg: getVal('iTheta'),
+    phaseAngleDeg: getVal('iPhase'),
+    ClAlpha:     getVal('iCla'),
+    Cd0:         getVal('iCd0'),
+    stallDeg:    getVal('iStall'),
+    rho:         getVal('iRho'),
+  };
+
+  if (params.R <= 0 || params.b <= 0 || params.c <= 0) return;
+
+  const r = calcCyclorotor(params);
+  lastResult = r;
+  lastParams = params;
+
+  const imp = units === 'imp';
+
+  // Thrust
+  const thr = imp ? r.thrustLbf : r.thrustN;
+  const thrU = imp ? 'lbf' : 'N';
+  const thrSub = imp
+    ? `${r.thrustKg.toFixed(2)} kg-force`
+    : `${r.thrustKg.toFixed(2)} kg-force  /  ${r.thrustLbf.toFixed(2)} lbf`;
+  document.getElementById('oThrust').childNodes[0].textContent = fmt(thr, thr > 100 ? 1 : 2);
+  document.getElementById('oThrustU').textContent = ' ' + thrU;
+  document.getElementById('oThrustSub').textContent = thrSub;
+
+  // Power
+  const pwr = imp ? r.powerHP : r.powerW;
+  const pwrU = imp ? 'HP' : 'W';
+  const pwrSub = imp
+    ? `${r.powerW.toFixed(1)} W`
+    : `${r.powerHP.toFixed(3)} HP`;
+  document.getElementById('oPower').childNodes[0].textContent = fmt(pwr, pwr > 100 ? 1 : 2);
+  document.getElementById('oPowerU').textContent = ' ' + pwrU;
+  document.getElementById('oPowerSub').textContent = pwrSub;
+
+  // FM
+  const fmPct = (r.FM * 100).toFixed(1);
+  document.getElementById('oFM').textContent = fmPct + '%';
+  document.getElementById('oFMbar').style.width = fmPct + '%';
+  const fmColor = r.FM > 0.65 ? 'var(--green)' : r.FM > 0.45 ? 'var(--warn)' : 'var(--danger)';
+  document.getElementById('oFM').style.color = fmColor;
+  document.getElementById('oFMbar').style.background = fmColor;
+
+  // Torque
+  const torq = imp ? r.torqueLbft : r.torqueNm;
+  document.getElementById('oTorque').childNodes[0].textContent = fmt(torq, 3);
+  document.getElementById('oTorqueU').textContent = imp ? ' lb·ft' : ' N·m';
+
+  // Thrust direction
+  document.getElementById('oDir').textContent = r.thrustAngle.toFixed(1) + '°';
+
+  // Derived stats
+  const vtip = imp ? r.Vtip_fps.toFixed(1)+' ft/s' : r.Vtip.toFixed(1)+' m/s';
+  document.getElementById('oVtip').textContent  = vtip;
+  document.getElementById('oAoA').textContent   = r.maxAoADeg.toFixed(1) + '°';
+  document.getElementById('oSolid').textContent = r.solidity.toFixed(3);
+  document.getElementById('oAR').textContent    = r.AR.toFixed(2);
+
+  const dl = imp
+    ? r.diskLoadingImp.toFixed(2)+' lbf/ft²'
+    : r.diskLoading.toFixed(1)+' N/m²';
+  const pl = imp
+    ? r.powerLoadingImp.toFixed(2)+' lbf/HP'
+    : (r.powerLoading*1000).toFixed(2)+' mN/W';
+  document.getElementById('oDL').textContent = dl;
+  document.getElementById('oPL').textContent = pl;
+
+  // Warnings
+  buildWarnings(r, params);
+
+  // Draw pitch curve
+  drawPitchCurve(params.thetaMaxDeg, params.phaseAngleDeg, params.N, params.stallDeg);
+}
+
+function fmt(v, d) {
+  if (!isFinite(v) || v === 0) return '0';
+  return v.toFixed(d);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WARNINGS
+// ═══════════════════════════════════════════════════════════
+function buildWarnings(r, p) {
+  const warnings = [];
+
+  if (r.stallFrac > 0.05)
+    warnings.push(`Blades stalling over ${(r.stallFrac*100).toFixed(0)}% of revolution — max AoA ${r.maxAoADeg.toFixed(1)}° exceeds stall (${p.stallDeg}°). Reduce θ_max or increase stall angle.`);
+
+  if (r.Vtip > 100)
+    warnings.push(`Tip speed ${r.Vtip.toFixed(0)} m/s approaching compressibility. Consider reducing RPM or radius.`);
+
+  if (r.Vtip > 340 * 0.3)
+    warnings.push(`Tip Mach ≈ ${(r.Vtip/340).toFixed(2)} — wave drag onset expected above M=0.3. Model does not account for compressibility corrections.`);
+
+  if (p.R < p.c * 2)
+    warnings.push(`Radius/chord ratio ${(p.R/p.c).toFixed(1)} is very low — blade element assumptions break down below R/c ≈ 2.`);
+
+  if (r.FM < 0.3 && r.thrustN > 0)
+    warnings.push(`Figure of Merit ${(r.FM*100).toFixed(1)}% is low. Profile drag dominates — check Cd₀ or reduce RPM.`);
+
+  if (p.N * p.c / (2 * Math.PI * p.R) > 0.4)
+    warnings.push(`Solidity ${r.solidity.toFixed(3)} > 0.4 — blade-to-blade interaction effects not modeled; actual thrust will be lower than computed.`);
+
+  const wp = document.getElementById('warnPanel');
+  const wl = document.getElementById('warnList');
+  if (warnings.length) {
+    wl.innerHTML = warnings.map(w=>`<div class="warn-item">${w}</div>`).join('');
+    wp.classList.add('show');
+  } else {
+    wp.classList.remove('show');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PITCH CURVE
+// ═══════════════════════════════════════════════════════════
+function drawPitchCurve(thetaMax, phaseDeg, N, stallDeg) {
+  const canvas = document.getElementById('pitchCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  const psi = phaseDeg * Math.PI / 180;
+  const midY = H / 2;
+  const scale = (H/2 - 6) / (Math.max(thetaMax, 1));
+  const STEPS = W;
+
+  // Zero line
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,4]);
+  ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(W, midY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Stall lines
+  const stallY = midY - stallDeg * scale;
+  ctx.strokeStyle = 'rgba(248,81,73,0.3)';
+  ctx.setLineDash([2,4]);
+  ctx.beginPath(); ctx.moveTo(0, stallY); ctx.lineTo(W, stallY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, midY + (stallY-midY)*-1); ctx.lineTo(W, midY + (stallY-midY)*-1); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Pitch curve
+  ctx.strokeStyle = 'rgba(240,165,0,0.85)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let x = 0; x < W; x++) {
+    const phi = (x / W) * 2 * Math.PI;
+    const theta = thetaMax * Math.cos(phi - psi);
+    const y = midY - theta * scale;
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Blade position dots
+  const anim = animTime % (2 * Math.PI);
+  for (let i = 0; i < N; i++) {
+    const phi = (anim + 2 * Math.PI * i / N) % (2 * Math.PI);
+    const theta = thetaMax * Math.cos(phi - psi);
+    const x = (phi / (2 * Math.PI)) * W;
+    const y = midY - theta * scale;
+    const frac = Math.abs(theta) / Math.max(stallDeg, 1);
+    let col;
+    if (frac >= 1) col = 'rgba(248,81,73,1)';
+    else if (frac > 0.75) col = `rgba(210,153,34,1)`;
+    else col = 'rgba(63,185,80,1)';
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, 2*Math.PI);
+    ctx.fillStyle = col;
+    ctx.fill();
+  }
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(139,148,158,0.7)';
+  ctx.font = '9px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText('0°  90°  180°  270°  360°  (azimuth)', 4, H - 3);
+  ctx.textAlign = 'right';
+  ctx.fillText(`+${thetaMax.toFixed(1)}°`, W - 3, 10);
+  ctx.fillText(`−${thetaMax.toFixed(1)}°`, W - 3, H - 3);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ROTOR ANIMATION
+// ═══════════════════════════════════════════════════════════
+function drawRotor(angle) {
+  const canvas = document.getElementById('rotorCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const DRAW_R = Math.min(W,H) * 0.36;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // Background grid rings
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let r = DRAW_R*0.25; r <= DRAW_R*1.4; r += DRAW_R*0.25) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI); ctx.stroke();
+  }
+
+  // Rotor circle
+  ctx.strokeStyle = 'rgba(240,165,0,0.25)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.arc(cx, cy, DRAW_R, 0, 2*Math.PI); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const thetaMax = getVal('iTheta') * Math.PI / 180;
+  const psi      = getVal('iPhase') * Math.PI / 180;
+  const N        = parseInt(document.getElementById('iN').value);
+  const stallDeg = getVal('iStall');
+  const chordPx  = DRAW_R * 0.20;
+
+  // Phase angle direction ray
+  ctx.strokeStyle = 'rgba(88,166,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3,5]);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + DRAW_R * 0.9 * Math.sin(psi), cy - DRAW_R * 0.9 * Math.cos(psi));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Blades
+  for (let i = 0; i < N; i++) {
+    const phi   = angle + (2 * Math.PI * i / N);
+    const theta = thetaMax * Math.cos(phi - psi);
+    const AoAabs = Math.abs(theta * 180 / Math.PI);
+    const frac   = AoAabs / Math.max(stallDeg, 0.1);
+
+    // Color: green → amber → red
+    let r, g, b;
+    if (frac < 0.7) {
+      r = Math.round(frac / 0.7 * 230); g = 185; b = 55;
+    } else if (frac < 1.0) {
+      r = 230; g = Math.round((1 - (frac-0.7)/0.3) * 185); b = 55;
+    } else {
+      r = 248; g = 81; b = 73;
+    }
+    const col = `rgb(${r},${g},${b})`;
+
+    const bx = cx + DRAW_R * Math.sin(phi);
+    const by = cy - DRAW_R * Math.cos(phi);
+
+    ctx.save();
+    ctx.translate(bx, by);
+    // phi: blade moves tangentially; theta: pitch rotation
+    ctx.rotate(phi + theta);
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = col;
+    ctx.fillRect(-chordPx/2, -chordPx*0.07, chordPx, chordPx*0.14);
+    // Leading edge highlight
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillRect(-chordPx/2, -chordPx*0.07, 2.5, chordPx*0.14);
+    ctx.restore();
+  }
+
+  // Thrust vector
+  if (lastResult && lastResult.thrustN > 0.01) {
+    const thrRad = lastResult.thrustAngle * Math.PI / 180;
+    const maxLen = DRAW_R * 0.55;
+    // Normalize: map thrust to 0–maxLen (soft cap)
+    const arrowLen = maxLen * Math.min(1, lastResult.thrustN / 20);
+    const tx = cx + arrowLen * Math.sin(thrRad);
+    const ty = cy - arrowLen * Math.cos(thrRad);
+
+    ctx.strokeStyle = 'rgba(88,166,255,0.9)';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(88,166,255,0.6)';
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(tx, ty); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Arrowhead
+    const ang = Math.atan2(ty - cy, tx - cx);
+    ctx.fillStyle = 'rgba(88,166,255,0.9)';
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx - 9*Math.cos(ang-0.4), ty - 9*Math.sin(ang-0.4));
+    ctx.lineTo(tx - 9*Math.cos(ang+0.4), ty - 9*Math.sin(ang+0.4));
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Center hub
+  ctx.shadowColor = 'rgba(240,165,0,0.8)';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = 'rgba(240,165,0,0.9)';
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, 2*Math.PI); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Corner labels
+  ctx.fillStyle = 'rgba(139,148,158,0.55)';
+  ctx.font = '10px "JetBrains Mono"';
+  ctx.textAlign = 'left';
+  ctx.fillText(getVal('iRPM') + ' RPM', 8, H - 8);
+  ctx.textAlign = 'right';
+  if (lastResult) {
+    ctx.fillStyle = lastResult.thrustN > 0 ? 'rgba(240,165,0,0.7)' : 'rgba(139,148,158,0.55)';
+    ctx.fillText(
+      (units==='imp' ? lastResult.thrustLbf.toFixed(1)+' lbf' : lastResult.thrustN.toFixed(1)+' N'),
+      W - 8, H - 8
+    );
+  }
+}
+
+// Animation loop
+function animLoop(ts) {
+  if (!lastTs) lastTs = ts;
+  const dt = Math.min((ts - lastTs) / 1000, 0.05);
+  lastTs = ts;
+
+  const rpm = getVal('iRPM');
+  animTime += dt * (rpm * 2 * Math.PI / 60);
+
+  drawRotor(animTime);
+  drawPitchCurve(getVal('iTheta'), getVal('iPhase'), parseInt(document.getElementById('iN').value), getVal('iStall'));
+  rafId = requestAnimationFrame(animLoop);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AI ANALYSIS
+// ═══════════════════════════════════════════════════════════
+async function analyzeWithClaude() {
+  if (!lastResult || !lastParams) {
+    alert('Run a calculation first.');
+    return;
+  }
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('Enter an Anthropic API key.'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  const body = document.getElementById('aiBody');
+  btn.disabled = true;
+  body.className = 'ai-body';
+  body.innerHTML = '<span class="ai-spinner"></span> Analyzing design...';
+
+  const paramsSummary = {
+    geometry: {
+      radius_m: lastParams.R.toFixed(4),
+      span_m:   lastParams.b.toFixed(4),
+      chord_m:  lastParams.c.toFixed(4),
+      blades:   lastParams.N,
+      aspect_ratio: (lastParams.b / lastParams.c).toFixed(2),
+      solidity: lastResult.solidity.toFixed(4)
+    },
+    motion: { RPM: lastParams.RPM, tip_speed_m_s: lastResult.Vtip.toFixed(2) },
+    pitch:  { theta_max_deg: lastParams.thetaMaxDeg, phase_angle_deg: lastParams.phaseAngleDeg },
+    airfoil:{ Cl_alpha_per_rad: lastParams.ClAlpha, Cd0: lastParams.Cd0, stall_angle_deg: lastParams.stallDeg },
+    environment: { rho_kg_m3: lastParams.rho.toFixed(4) }
+  };
+
+  const resultsSummary = {
+    thrust_N:         lastResult.thrustN.toFixed(3),
+    thrust_kg:        lastResult.thrustKg.toFixed(3),
+    thrust_lbf:       lastResult.thrustLbf.toFixed(3),
+    thrust_angle_deg: lastResult.thrustAngle.toFixed(2),
+    power_W:          lastResult.powerW.toFixed(2),
+    power_HP:         lastResult.powerHP.toFixed(4),
+    torque_Nm:        lastResult.torqueNm.toFixed(4),
+    figure_of_merit:  lastResult.FM.toFixed(4),
+    max_blade_AoA_deg: lastResult.maxAoADeg.toFixed(2),
+    stall_fraction:   (lastResult.stallFrac * 100).toFixed(1) + '%',
+    disk_loading_N_m2: lastResult.diskLoading.toFixed(2),
+    power_loading_N_W: lastResult.powerLoading.toFixed(4)
+  };
+
+  const systemPrompt = `You are an expert in cyclorotor (cyclogyro) aerodynamics and small UAV rotorcraft design. Provide precise, technical engineering analysis. The user is an experienced builder with embedded systems and flight mechanics background — no hand-holding, be direct and specific.
+
+Structure your response with these sections (use ### for headers):
+### Design Viability
+### Performance Assessment  
+### Limiting Factors
+### Optimization Suggestions
+### Watch Points
+
+Keep each section concise but technically substantive. Use specific numbers. Flag anything physically questionable.`;
+
+  const userPrompt = `Analyze this cyclorotor design:
+
+PARAMETERS:
+${JSON.stringify(paramsSummary, null, 2)}
+
+CALCULATED RESULTS (BEMT + actuator disk model, hover):
+${JSON.stringify(resultsSummary, null, 2)}
+
+Provide engineering assessment. The builder wants to know: is this design reasonable, what's limiting performance, and what specific changes would most improve it?`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const text = data.content.map(c => c.text || '').join('');
+    body.className = 'ai-body';
+    body.innerHTML = renderMarkdown(text);
+
+  } catch (err) {
+    body.className = 'ai-body';
+    body.innerHTML = `<span style="color:var(--danger)">Error: ${err.message}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderMarkdown(md) {
+  return md
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,  '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^([^<].+)$/gm, (m) => m.startsWith('<') ? m : `<p>${m}</p>`)
+    .replace(/<p><\/p>/g, '');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  calculate();
+  rafId = requestAnimationFrame(animLoop);
+});
+</script>
+</body>
+</html>
